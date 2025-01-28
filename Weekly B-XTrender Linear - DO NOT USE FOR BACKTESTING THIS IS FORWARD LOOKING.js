@@ -38,7 +38,7 @@ for (let i = 1; i < shortTermXtrender.length; i++) {
 }
 
 //Land and interpolate on current timeframe
-const shortTermXtrender_interp = interpolate_sparse_series(land_points_onto_series(priceData.time, shortTermXtrender, time),"constant")
+const shortTermXtrender_interp = interpolate_sparse_series(land_points_onto_series(priceData.time, shortTermXtrender, time),"linear")
 const shortXtrenderCol_interp = interpolate_sparse_series(land_points_onto_series(priceData.time, shortXtrenderCol, time),"constant")
 if(showHistogram)
 	paint(shortTermXtrender_interp, {

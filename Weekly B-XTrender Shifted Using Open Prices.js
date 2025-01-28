@@ -11,19 +11,20 @@ This is also shifted back by 1 week to avoid forward looking when backtesting
 //
 describe_indicator('Weekly B-XTrender Shifted/Open Prices','lower');
 // Inputs
-const short_l1 = input.number('Short - L1', 2);
+const short_l1 = input.number('Short - L1', 5);
 const short_l2 = input.number('Short - L2', 20);
-const short_l3 = input.number('Short - L3', 2);
+const short_l3 = input.number('Short - L3', 5);
 const showHistogram = input.boolean("Show Osc. - Histogram", true)
-const showColorLine = input.boolean("Show Color - Line", true)
+const showColorLine = input.boolean("Show Color - Line", false)
 
-const showTrendLine = input.boolean("Show Trend - Line", true)
+const showTrendLine = input.boolean("Show Trend - Line", false)
 const long_l1 = input.number('Long - L1', 20);
-const long_l2 = input.number('Long - L2', 2);
+const long_l2 = input.number('Long - L2', 5);
 
 //Get weekly price data
 const priceDataRaw = await request.history(current.ticker, 'W',{ chart_type: "candles", ext_session: false });
 const priceData = shift(priceDataRaw.open, -1);
+debugger;
 /*After asking trendspider devs how to make this indicator safe to use for backtesting they indicated to do 3 things:
 1: Use interpolate_sparse_series constant mode 
 2: shift W data by 1 candle to the right (so for the current week use LAST week data)
@@ -126,7 +127,7 @@ if(showColorLine)
 	});
 
 //Paint color from color line as line so we can use in strategy tester
-const showColorBooleanLine = input.boolean("Show Color - Boolean Line", true)
+const showColorBooleanLine = input.boolean("Show Color - Boolean Line", false)
 const BullBearInd = Array(colShortTermXtrender_interp.length).fill(null);
 for (let i = 0; i < colShortTermXtrender_interp.length; i++) {
     if (colShortTermXtrender_interp[i] === 'rgba(0, 230, 118, 0.2)') {  // bright green
@@ -223,9 +224,36 @@ const currentTimeframe = current.resolution;
 const extendedBullSwitch = extendSignals(bullSwitch_interp,currentTimeframe);
 const extendedBearSwitch = extendSignals(bearSwitch_interp,currentTimeframe);
 
-const showShapes = input.boolean("Show Shapes", true)
+const showShapes = input.boolean("Show Shapes", false)
 if(showShapes)
 {
 	paint(extendedBullSwitch, { name: "Weekly Shapes - Bull Switch", style: 'dotted', thickness: 8, color: `rgba(0, 230, 118, 0.2)` });
 	paint(extendedBearSwitch, { name: "Weekly Shapes - Bear Switch", style: 'dotted', thickness: 8, color: `rgba(255, 82, 82, 0.2)` });
+}
+
+//Detect higher or lower direction in shortTerm histogram and create a line to indicate that
+let direction = Array(shortTermXtrender.length).fill(null);
+// Start from index 1 since we need to look back 1 positions
+for (let i = 1; i < shortTermXtrender.length; i++) {
+	const cur = shortTermXtrender[i];
+	const prev = shortTermXtrender[i-1];
+	
+	if (cur > prev) {
+		direction[i] = 70;
+	}
+	if (cur < prev) {
+		direction[i] = -70;
+	}
+	if (cur == prev) {
+		direction[i] = 0;
+	}
+}
+
+const direction_landed = land_points_onto_series(priceDataRaw.time, direction, time)
+// Extend/Copy the signals across the week
+const direction_interp = interpolate_sparse_series(direction_landed, 'constant');
+const showDirection = input.boolean("Show Histo Direction", true)
+if(showDirection)
+{
+	paint(direction_interp, { name: "Weekly Histo Direction", style: 'line', thickness: 1, color: `rgba(255, 255, 255, 1)` });
 }
