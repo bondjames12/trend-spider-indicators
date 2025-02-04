@@ -23,7 +23,9 @@ const long_l2 = input.number('Long - L2', 5);
 
 //Get weekly price data
 const priceDataRaw = await request.history(current.ticker, 'W',{ chart_type: "candles", ext_session: false });
-const priceData = shift(priceDataRaw.open, -1);
+const priceData = shift(priceDataRaw.open, 1);
+//const priceData = Array.from(priceDataRaw.open);
+//priceData[priceData.length - 1] = null;
 debugger;
 /*After asking trendspider devs how to make this indicator safe to use for backtesting they indicated to do 3 things:
 1: Use interpolate_sparse_series constant mode 
